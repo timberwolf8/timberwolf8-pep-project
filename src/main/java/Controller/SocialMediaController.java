@@ -3,10 +3,15 @@ package Controller;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import DAO.AccountDAO;
+import DAO.MessageDAO;
 import Model.Account;
 import Model.Message;
+import Service.AccountService;
+import Service.MessageService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
@@ -16,6 +21,15 @@ import io.javalin.http.Context;
  * refer to prior mini-project labs and lecture materials for guidance on how a controller may be built.
  */
 public class SocialMediaController {
+
+    private AccountService accountService;
+    private MessageService messageService;
+
+    public SocialMediaController() {
+        this.accountService = new AccountService(new AccountDAO());
+        this.messageService = new MessageService(new MessageDAO());
+    }
+
     /**
      * In order for the test cases to work, you will need to write the endpoints in the startAPI() method, as the test
      * suite must receive a Javalin object from this method.
@@ -50,7 +64,7 @@ public class SocialMediaController {
         }
     }
 
-    private void postLoginHandler(Context context) {
+    private void postLoginHandler(Context context) throws JsonMappingException, JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         Account acc = mapper.readValue(context.body(), Account.class);
         Account log = accountService.login(acc);
@@ -61,7 +75,7 @@ public class SocialMediaController {
         }
     }
 
-    private void postMessagesHandler(Context context) {
+    private void postMessagesHandler(Context context) throws JsonMappingException, JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         Message mess = mapper.readValue(context.body(), Message.class);
         Message addedMessage = messageService.addMessage(mess);
@@ -97,7 +111,7 @@ public class SocialMediaController {
         }
     }
 
-    private void patchMessagesByIdHandler(Context context) {
+    private void patchMessagesByIdHandler(Context context) throws JsonMappingException, JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         int messageId = Integer.parseInt(context.pathParam("message_id"));
         Message exists = messageService.getMessagesById(messageId);
@@ -116,10 +130,10 @@ public class SocialMediaController {
         }
     }
 
-    private void getAllUserMessagesHandler(Context context) {
+    private void getAllUserMessagesHandler(Context context) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         int accountId = Integer.parseInt(context.pathParam("account_id"));
-        List<Message> messages = messageService.getMessagesByUser(accountId);
+        List<Message> messages = messageService.getMessagesByUserId(accountId);
         context.json(mapper.writeValueAsString(messages));
     }
 

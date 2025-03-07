@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import Model.Account;
+import Model.Message;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
@@ -41,7 +42,7 @@ public class SocialMediaController {
     private void postRegistrationHandler(Context context) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         Account acc = mapper.readValue(context.body(), Account.class);
-        Account addedAccount = accountService.addAuthor(acc);
+        Account addedAccount = accountService.addAccount(acc);
         if(addedAccount != null){
             context.json(mapper.writeValueAsString(addedAccount));
         }else{
@@ -62,29 +63,64 @@ public class SocialMediaController {
 
     private void postMessagesHandler(Context context) {
         ObjectMapper mapper = new ObjectMapper();
-        context.json("sample text");
+        Message mess = mapper.readValue(context.body(), Message.class);
+        Message addedMessage = messageService.addMessage(mess);
+        if(addedMessage != null){
+            context.json(mapper.writeValueAsString(addedMessage));
+        }else{
+            context.status(400);
+        }
     }
 
     private void getMessagesHandler(Context context) {
-        List<Account> accounts = accountService.getMessages();
-        context.json(accounts);
+        List<Message> messages = messageService.getMessages();
+        context.json(messages);
     }
 
     private void getMessagesByIdHandler(Context context) {
-        List<Account> accounts = accountService.getMessagesById();
-        context.json(accounts);
+        int messageId = Integer.parseInt(context.pathParam("message_id"));
+        Message mess = messageService.getMessagesById(messageId);
+        if(mess != null){
+            context.json(mess);
+        }else{
+            context.status(200);
+        }
     }
 
     private void deleteMessagesByIdHandler(Context context) {
-        context.json(accounts);
+        int messageId = Integer.parseInt(context.pathParam("message_id"));
+        Message mess = messageService.getMessagesById(messageId);
+        if(mess != null && messageService.deleteMessage(messageId)){
+            context.json(mess);
+        }else{
+            context.status(200);
+        }
     }
 
     private void patchMessagesByIdHandler(Context context) {
-        context.json("sample text");
+        ObjectMapper mapper = new ObjectMapper();
+        int messageId = Integer.parseInt(context.pathParam("message_id"));
+        Message exists = messageService.getMessagesById(messageId);
+        if(exists == null){
+            context.status(400);
+            return;
+        }
+
+        Message update = mapper.readValue(context.body(), Message.class);
+        Message mess = messageService.updateMessage(messageId, update.getMessage_text());
+
+        if (mess != null) {
+            context.json(mess);
+        } else {
+            context.status(400);
+        }
     }
 
     private void getAllUserMessagesHandler(Context context) {
-        context.json("sample text");
+        ObjectMapper mapper = new ObjectMapper();
+        int accountId = Integer.parseInt(context.pathParam("account_id"));
+        List<Message> messages = messageService.getMessagesByUser(accountId);
+        context.json(mapper.writeValueAsString(messages));
     }
 
 
